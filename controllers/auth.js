@@ -1,5 +1,6 @@
 const User = require('../models/User');
 const {registerValidation} = require('../validation');
+const bcrypt = require('bcryptjs');
 
 
 exports.getAuth= async(req, res) => {
@@ -12,11 +13,16 @@ exports.getAuth= async(req, res) => {
   const emailExist = await User.findOne({email: req.body.email})
   if(emailExist) return res.status(400).send('Email already exists');
 
-  //Create a new user
+  // Hass passwords
+  const salt = await bcrypt.genSalt(10);
+  const hashedPassword = await bcrypt.hash(req.body.password, salt);
+
+
+  // Create a new user
   const user = new User({
     name: req.body.name,
     email: req.body.email,
-    password: req.body.password
+    password: hashedPassword
   });
 
   try {
