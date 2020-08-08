@@ -1,6 +1,7 @@
 const User = require('../models/User');
 const {registerValidation, loginValidation} = require('../validation');
 const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 
 
 exports.getAuth= async(req, res) => {
@@ -48,45 +49,10 @@ exports.getLogin= async(req, res) => {
     const validPass = await bcrypt.compare(req.body.password, user.password);
     if(!validPass) return res.status(400).send('Invalid password');
 
-    res.send('Logged in');
+    // Create and assign a token
+    const token = jwt.sign({_id: user._id}, process.env.TOKEN_SECRET);
+    res.header('auth-token', token).send(token);
+
+    //res.send('Logged in');
 
 };
-
-
-
-/////////////////////////////////////////////////
-
-
-// const User = require('../models/User');
-
-// // VALIDATION
-
-// const Joi = require('@hapi/joi');
-
-// const schema = Joi.object({
-//   name: Joi.string().min(6).required(),
-//   email: Joi.string().min(6).required().email(),
-//   password: Joi.string().min(6).required()
-// });
-
-
-// exports.getAuth= async(req, res) => {
-
-//   const {error} = schema.validate(req.body);
-
-//   if (error) return res.status(400).send(error.details[0].message);
-
-//   const user = new User({
-//     name: req.body.name,
-//     email: req.body.email,
-//     password: req.body.password
-//   });
-
-//   try {
-//     const savedUser = await user.save();
-//     res.send(savedUser);
-//   }catch(err){
-//     res.status(400).send(err)
-//   }
-
-// };
