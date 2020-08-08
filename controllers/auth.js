@@ -1,5 +1,5 @@
 const User = require('../models/User');
-const {registerValidation} = require('../validation');
+const {registerValidation, loginValidation} = require('../validation');
 const bcrypt = require('bcryptjs');
 
 
@@ -9,11 +9,11 @@ exports.getAuth= async(req, res) => {
   const {error} = registerValidation(req.body);
   if (error) return res.status(400).send(error.details[0]);
 
-  // Check if user alreday exists in the database
+  // Check if user already exists in the database
   const emailExist = await User.findOne({email: req.body.email})
   if(emailExist) return res.status(400).send('Email already exists');
 
-  // Hass passwords
+  // Hash passwords
   const salt = await bcrypt.genSalt(10);
   const hashedPassword = await bcrypt.hash(req.body.password, salt);
 
@@ -27,12 +27,32 @@ exports.getAuth= async(req, res) => {
 
   try {
     const savedUser = await user.save();
-    res.send(savedUser);
+    res.send({user: user._id});
   }catch(err){
     res.status(400).send(err)
   }
 
 };
+
+exports.getLogin= async(req, res) => {
+
+    // Validate data before creating a user
+    const {error} = loginValidation(req.body);
+    if (error) return res.status(400).send(error.details[0]);
+
+    // Check if user already exists in the database
+    const user = await User.findOne({email: req.body.email})
+    if(!user) return res.status(400).send('Email does not exist');
+
+    // Check if password is correct
+    const validPass = await bcrypt.compare(req.body.password, user.password);
+    if(!validPass) return res.status(400).send('Invalid password');
+
+    res.send('Logged in');
+
+};
+
+
 
 /////////////////////////////////////////////////
 
